@@ -5,7 +5,6 @@ DECLARE @execute BIT = 'false';
 
 IF @execute = 'false'
 BEGIN
-    PRINT '@execute = false';
 
     SELECT COUNT(1)
     FROM [TranscryptDataStorage].[dbo].Data d 
@@ -17,10 +16,10 @@ BEGIN
         AND rd.Id IS NULL 
         AND rs.Id IS NULL 
         AND esa.EmployeeId IS NULL;
+
 END
 ELSE
 BEGIN
-    PRINT '@execute = true';
 
     DECLARE @row   INT
           , @count INT
@@ -60,4 +59,5 @@ BEGIN
 
         SET @count -= @row;
     END
+
 END
