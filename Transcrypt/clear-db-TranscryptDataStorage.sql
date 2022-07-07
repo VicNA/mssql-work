@@ -12,7 +12,7 @@ BEGIN
         LEFT jOIN RoutingWorkflowDocuments rd   ON rd.DataStorageId = d.DataId
         LEFT JOIN RoutingWorkflowSignatures rs  ON rs.DataStorageId = d.DataId
         LEFT JOIN EmployeeShelfAccess esa       ON esa.DataStorageId = d.DataId
-    where fc.Id IS NULL 
+    WHERE fc.Id IS NULL 
         AND rd.Id IS NULL 
         AND rs.Id IS NULL 
         AND esa.EmployeeId IS NULL;
@@ -23,6 +23,7 @@ BEGIN
 
     DECLARE @row   INT
           , @count INT
+          , @time  INT
           , @start DATETIME
           , @end   DATETIME;
 
@@ -37,9 +38,10 @@ BEGIN
         AND rs.Id IS NULL 
         AND esa.EmployeeId IS NULL;
 
-    SELECT @start = GETDATE()                   -- время запуска задачи
-         , @end   = DATEADD(HOUR, 6, @start)    -- время завершения задачи
-         , @row   = 25000;                      -- количество строк на итерацию
+    SELECT @start = GETDATE()                       -- время запуска задачи
+         , @time  = 6                               -- длительность работы скрипта
+         , @end   = DATEADD(HOUR, @time, @start)    -- время завершения задачи
+         , @row   = 25000;                          -- количество строк на итерацию
 
     WHILE @count > 0 AND (GETDATE() < @end)
     BEGIN

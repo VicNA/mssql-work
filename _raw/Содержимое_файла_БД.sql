@@ -1,3 +1,5 @@
+USE tcryptapi_new;
+
 select object_name(id) as tablename, sy.[name] as indexname, sf.name, sf.filename
 from sysindexes sy
     join sysfiles sf on sf.groupid = sy.groupid

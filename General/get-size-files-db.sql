@@ -47,14 +47,16 @@ FORWARD_ONLY STATIC
 FOR 
     SELECT [name] 
     FROM master..sysdatabases
+    -- список выбранных БД
     -- WHERE [name] IN (
     --     'DBAtools'
     --   , 'TranscryptDataStorage'
     --   , 'tcryptapi_new'
 
     -- )
-   WHERE [name] NOT IN ('master', 'tempdb', 'msdb', 'model', 'Baseline', 'DBAtools')
-   ORDER BY [name]
+    -- список исключающих БД
+    WHERE [name] NOT IN ('master', 'tempdb', 'msdb', 'model', 'Baseline', 'DBAtools')
+    ORDER BY [name]
     
 OPEN curDB 
 

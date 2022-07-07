@@ -53,12 +53,16 @@ END
 ELSE
 BEGIN
 
-    DECLARE @row   int
-          , @count int
-          , @start datetime;
+    DECLARE @row   INT
+          , @count INT
+          , @time  INT
+          , @start DATETIME
+          , @end   DATETIME;
 
-    SELECT @row   = 25000
-         , @start = GETDATE();
+    SELECT @start = GETDATE()                       -- время запуска задачи
+         , @time  = 6                               -- длительность работы скрипта
+         , @end   = DATEADD(HOUR, @time, @start)    -- время завершения задачи
+         , @row   = 25000;                          -- количество строк на итерацию
 
     SELECT @count = COUNT(1)
     FROM [TranscryptDataStorage].[dbo].Data d
@@ -71,7 +75,7 @@ BEGIN
         AND rs.Id IS NULL
         AND esa.EmployeeId IS NULL;
 
-    WHILE @count > 0 AND (GETDATE() < DATEADD(HOUR, 6, @start))
+    WHILE @count > 0 AND (GETDATE() < @end)
     BEGIN
        DELETE FROM [TranscryptDataStorage].[dbo].Data 
        WHERE DataId IN (
