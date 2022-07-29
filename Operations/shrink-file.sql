@@ -1,32 +1,80 @@
-DECLARE @dbfile NVARCHAR(30)
-      , @dbsize INT
-      , @shrink NVARCHAR(30)
-      ;
+DECLARE 
+      @dbname  NVARCHAR(30)
+    , @dbfile  NVARCHAR(30)
+    , @dbsize  INT
+    , @shrink  NVARCHAR(30)
+    , @command NVARCHAR(MAX)
+    , @newline NVARCHAR(2)
+    , @debug   NVARCHAR(1)
+    ;
 
-SELECT @dbfile = 'TranscryptDataStorage'    -- имя конкретного файла БД
-     , @dbsize = NULL                       -- целевой размер до которого нужно учесь файл БД, в мегабайтах
-     , @shrink = 'NOTRUNCATE'               -- виды операции усечения: NOTRUNCATE | TRUNCATEONLY | EMPTYFILE | SHRINK to size
+SELECT
+      @dbname = 'tcryptapi_new'         -- Имя базы данных, файл которого будем сжимать
+    , @dbfile = 'tcryptapi'             -- Имя конкретного файла БД, которую будет сжимать
+    , @dbsize = 399360                  -- Целевой размер до которого нужно учесь файл БД, в мегабайтах
+    , @shrink = 'SHRINK'                -- Виды операции усечения: NOTRUNCATE | TRUNCATEONLY | EMPTYFILE | SHRINK to size
+    , @debug  = 'Y'                     -- Режим запуска скрипта: режим отладки (Y) | режим выполнения (N)
+    ;
 
-IF @shrink = 'SHRINK' AND @dbsize IS NOT NULL   -- перемещает данные из конца файла в начало и усекает файл до указанного размера
+-- Составление динамисеской команды для запуска процедуры сжатия/усечения
+SELECT
+      @newline = NCHAR(13) + NCHAR(10)
+    , @command = @newline + 'USE [' + @dbname + '];'
+    ;
+
+-- Перемещает данные из конца файла в начало и усекает файл до указанного размера
+IF @shrink = 'SHRINK' AND @dbsize IS NOT NULL
 BEGIN
-    PRINT 'RUN SHRINK to size';
-    DBCC SHRINKFILE (@dbfile, @dbsize);
+    PRINT '######################';
+    PRINT '# RUN SHRINK to size #';
+    PRINT '######################';
+
+    SELECT
+          @command += @newline
+        , @command += 'DBCC SHRINKFILE (' + @dbfile + ', ' + CONVERT(NVARCHAR, @dbsize) + ');'
+        ;
 END
 
-IF @shrink = 'NOTRUNCATE'                       -- перемещает данные из конца файла в начало, при наличии свободного места в начале файла
+-- Перемещает данные из конца файла в начало, при наличии свободного места в начале файла
+IF @shrink = 'NOTRUNCATE'
 BEGIN
-    PRINT 'RUN SHRINK NOTRUNCATE';
-    DBCC SHRINKFILE (@dbfile, NOTRUNCATE);
+    PRINT '#########################';
+    PRINT '# RUN SHRINK NOTRUNCATE #';
+    PRINT '#########################';
+
+    SELECT
+          @command += @newline
+        , @command += 'DBCC SHRINKFILE (' + @dbfile + ', NOTRUNCATE);'
+        ;
 END
 
-IF @shrink = 'TRUNCATEONLY'                     -- усекает файл из свободного в конце файла пространства
+-- Усекает файл из свободного в конце файла пространства
+IF @shrink = 'TRUNCATEONLY'
 BEGIN
-    PRINT 'RUN SHRINK TRUNCATEONLY';
-    DBCC SHRINKFILE (@dbfile, TRUNCATEONLY);
+    PRINT '###########################';
+    PRINT '# RUN SHRINK TRUNCATEONLY #';
+    PRINT '###########################';
+
+    SELECT
+          @command += @newline
+        , @command += 'DBCC SHRINKFILE (' + @dbfile + ', TRUNCATEONLY);'
+        ;
 END
 
-IF @shrink = 'EMPTYFILE'                        -- переносит все данные из указанного файла в другие файлы в той же файловой группе
+-- Переносит все данные из указанного файла в другие файлы в той же файловой группе
+IF @shrink = 'EMPTYFILE'
 BEGIN
-    PRINT 'RUN SHRINK EMPTYFILE';
-    DBCC SHRINKFILE (@dbfile, EMPTYFILE);
+    PRINT '########################';
+    PRINT '# RUN SHRINK EMPTYFILE #';
+    PRINT '########################';
+
+    SELECT
+          @command += @newline
+        , @command += 'DBCC SHRINKFILE (' + @dbfile + ', EMPTYFILE);'
+        ;
 END
+
+IF @debug = 'Y'
+    PRINT @command;
+ELSE IF @debug = 'N'
+    EXEC sp_executesql @command;
