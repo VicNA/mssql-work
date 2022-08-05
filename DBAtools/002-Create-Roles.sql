@@ -1,50 +1,61 @@
-/*===============================================*/
-DECLARE @serverRole   NVARCHAR(20)  = 'job_executor'
-      , @databaseRole NVARCHAR(20)  = 'job_executor'
-      , @debug        NVARCHAR(1)   = 'Y'
-      ;
+DECLARE
+	  @database     NVARCHAR(30)
+	, @serverRole   NVARCHAR(20)
+    , @databaseRole NVARCHAR(20)
+    , @debug        NVARCHAR(1) 
+    ;
+
+SELECT
+	  @database		= 'DBAtools'
+	, @serverRole	= 'job_executor'	-- Наименование серверной роли
+	, @databaseRole = @serverRole	    -- Наименование роли базы данных
+	, @debug		= 'Y'				-- Режим запуска скрипта: режим отладки (Y) | режим выполнения (N)
 /*===============================================*/
 
-DECLARE @sysrole  NVARCHAR(20)
-      , @command  NVARCHAR(MAX)
-      , @usedb    NVARCHAR(20)
-      , @version  INT
-      , @newline1 NVARCHAR(2)
-      , @newline2 NVARCHAR(4)
-      ;
+DECLARE 
+	  @sysrole  NVARCHAR(20)
+    , @usedb    NVARCHAR(20)
+    , @version  INT
+    , @command  NVARCHAR(MAX)
+    , @newline1 NVARCHAR(2)
+    , @newline2 NVARCHAR(4)
+    ;
 
-SELECT @command  = ''
-     , @version  = CONVERT(int, SERVERPROPERTY('ProductMajorVersion'))
+SELECT 
+       @version  = CONVERT(int, SERVERPROPERTY('ProductMajorVersion'))
+	 , @command  = ''
      , @newline1 = NCHAR(13) + NCHAR(10)
      , @newline2 = @newline1 + @newline1
      ;
+
+IF EXISTS (SELECT 1 FROM sys.sysdatabases WHERE name = @database)
+BEGIN
 
 BEGIN TRY
     
     USE master;
 
     SET @usedb = 'USE master;';
+        
+    IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @databaseRole and type = 'R')
+        SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
+			+ 'CREATE ROLE [' + @databaseRole + '];';
 
     IF @version > 10
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = @serverRole AND type = 'R')
-            SELECT @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
-                 , @command += 'CREATE SERVER ROLE [' + @serverRole + '] AUTHORIZATION [sa];';
-
+            SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 ELSE @usedb + @newline2 END
+				+ 'CREATE SERVER ROLE [' + @serverRole + '] AUTHORIZATION [sa];';
     END
-        
-    IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @databaseRole and type = 'R')
-        SELECT @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
-             , @command += 'CREATE ROLE [' + @databaseRole + '];';
 
     
     USE DBAtools;
 
-    SET @usedb = 'USE DBAtools;';
+    SET @usedb = 'USE ' + @database + ';';
 
     IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @databaseRole and type = 'R')
-        SELECT @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
-             , @command += 'CREATE ROLE [' + @databaseRole + '];';
+        SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
+			+ 'CREATE ROLE [' + @databaseRole + '];';
 
     SET @sysrole = 'db_datawriter';
 
@@ -67,8 +78,8 @@ BEGIN TRY
     SET @usedb = 'USE msdb;';
 
     IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @databaseRole and type = 'R')
-        SELECT @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
-             , @command += 'CREATE ROLE [' + @databaseRole + '];';
+        SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
+			+ 'CREATE ROLE [' + @databaseRole + '];';
     
     SET @sysrole = 'db_datareader';
 
@@ -115,8 +126,10 @@ BEGIN CATCH
          , @ErrorSeverity = ERROR_SEVERITY()
          , @ErrorState    = ERROR_STATE();
 
-    RAISERROR (@ErrorMessage, -- Message text.
-               @ErrorSeverity, -- Severity.
-               @ErrorState -- State.
+    RAISERROR (@ErrorMessage,	-- Message text.
+               @ErrorSeverity,	-- Severity.
+               @ErrorState		-- State.
                );
 END CATCH
+
+END

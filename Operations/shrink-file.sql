@@ -29,9 +29,8 @@ BEGIN
     PRINT '# RUN SHRINK to size #';
     PRINT '######################';
 
-    SELECT
-          @command += @newline
-        , @command += 'DBCC SHRINKFILE (' + @dbfile + ', ' + CONVERT(NVARCHAR, @dbsize) + ');'
+    SET @command += @newline
+        + 'DBCC SHRINKFILE (' + @dbfile + ', ' + CONVERT(NVARCHAR, @dbsize) + ');'
         ;
 END
 
@@ -42,9 +41,8 @@ BEGIN
     PRINT '# RUN SHRINK NOTRUNCATE #';
     PRINT '#########################';
 
-    SELECT
-          @command += @newline
-        , @command += 'DBCC SHRINKFILE (' + @dbfile + ', NOTRUNCATE);'
+    SET @command += @newline
+        + 'DBCC SHRINKFILE (' + @dbfile + ', NOTRUNCATE);'
         ;
 END
 
@@ -55,9 +53,8 @@ BEGIN
     PRINT '# RUN SHRINK TRUNCATEONLY #';
     PRINT '###########################';
 
-    SELECT
-          @command += @newline
-        , @command += 'DBCC SHRINKFILE (' + @dbfile + ', TRUNCATEONLY);'
+    SET @command += @newline
+        + 'DBCC SHRINKFILE (' + @dbfile + ', TRUNCATEONLY);'
         ;
 END
 
@@ -68,9 +65,8 @@ BEGIN
     PRINT '# RUN SHRINK EMPTYFILE #';
     PRINT '########################';
 
-    SELECT
-          @command += @newline
-        , @command += 'DBCC SHRINKFILE (' + @dbfile + ', EMPTYFILE);'
+    SET @command += @newline
+        + 'DBCC SHRINKFILE (' + @dbfile + ', EMPTYFILE);'
         ;
 END
 

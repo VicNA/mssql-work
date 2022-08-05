@@ -1,14 +1,15 @@
 DECLARE 
       @database  NVARCHAR(30)
     , @directory NVARCHAR(255)
+	, @dbfile    NVARCHAR(255)
     , @debug     NVARCHAR(1)
     ;
 
 SELECT
-      @database  = 'DBAtools'   -- Имя создаваемой БД
-    , @directory = ''           -- Путь к каталогу, где будет распологаться БД
-    , @debug     = 'Y'          -- Режим запуска скрипта: режим отладки (Y) | режим выполнения (N)
-    , @dbfile    = @directory + '\' + @database
+      @database  = 'DBAtools'					-- Имя создаваемой БД
+    , @directory = 'R:\Data'					-- Путь к каталогу, где будет распологаться БД
+    , @dbfile    = @directory + '\' + @database	-- Полный путь к файлу БД
+    , @debug     = 'Y'							-- Режим запуска скрипта: режим отладки (Y) | режим выполнения (N)
     ;
 /*================================================*/
 
@@ -17,7 +18,6 @@ DECLARE
     , @usedb    NVARCHAR(20)
     , @newline1 NVARCHAR(2)
     , @newline2 NVARCHAR(4)
-    , @dbfile   NVARCHAR(255)
     ;
 
 SELECT
@@ -36,7 +36,7 @@ BEGIN
     SET @usedb = 'USE master;';
 
     IF LEN(ISNULL(@directory, '')) > 0
-        SET @command += @usedb + @newline2
+        SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
             + 'EXEC sp_configure ''show advanced option'', 1;' + @newline1
             + 'RECONFIGURE WITH OVERRIDE;' + @newline1
             + 'EXEC sp_configure ''xp_cmdshell'', 1;' + @newline1
@@ -50,7 +50,7 @@ BEGIN
     SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 ELSE @usedb + @newline2 END
         + N'CREATE DATABASE [' + @database + ']';
 
-    IF @directory IS NULL
+    IF @directory IS NULL OR LEN(@directory) = 0
         SET @command += ';';
     ELSE
         SET @command += @newline1 + 'ON PRIMARY'
