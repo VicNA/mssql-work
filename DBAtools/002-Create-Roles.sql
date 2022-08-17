@@ -5,11 +5,18 @@ DECLARE
     , @debug        NVARCHAR(1) 
     ;
 
+/*
+    @database     - Имя ранее созданной БД в скрипте 001-Create-Database.sql
+    @serverRole   - Наименование серверной роли
+    @databaseRole - Наименование роли базы данных
+    @debug        - Режим запуска скрипта: режим отладки (Y) | режим выполнения (N)
+*/
+
 SELECT
 	  @database		= 'DBAtools'
-	, @serverRole	= 'job_executor'	-- Наименование серверной роли
-	, @databaseRole = @serverRole	    -- Наименование роли базы данных
-	, @debug		= 'Y'				-- Режим запуска скрипта: режим отладки (Y) | режим выполнения (N)
+	, @serverRole	= 'job_executor'
+	, @databaseRole = @serverRole
+	, @debug		= 'Y'
 /*===============================================*/
 
 DECLARE 
@@ -31,16 +38,20 @@ SELECT
 IF EXISTS (SELECT 1 FROM sys.sysdatabases WHERE name = @database)
 BEGIN
 
-BEGIN TRY
-    
     USE master;
 
     SET @usedb = 'USE master;';
-        
+    
+    /*
+        Создаем роль @databaseRole в БД master, если она отстутствует
+    */
     IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @databaseRole and type = 'R')
         SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
 			+ 'CREATE ROLE [' + @databaseRole + '];';
 
+    /*
+        Создаем серверную роль @serverRole, если она отстутствует. Применимо начинай SQL Server 2012
+    */
     IF @version > 10
     BEGIN
         IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = @serverRole AND type = 'R')
@@ -49,14 +60,20 @@ BEGIN TRY
     END
 
     
-    USE DBAtools;
+    USE DBAtools;   -- Изменить контекст выполнения БД на значение из переменной @database
 
     SET @usedb = 'USE ' + @database + ';';
 
+    /*
+        Создаем роль @databaseRole в БД @database, если она отстутствует
+    */
     IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @databaseRole and type = 'R')
         SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
 			+ 'CREATE ROLE [' + @databaseRole + '];';
 
+    /*
+        Добавляем роль @databaseRole в роль "db_datawriter" в БД @database
+    */
     SET @sysrole = 'db_datawriter';
 
     IF NOT EXISTS (SELECT 1 FROM sys.database_principals r
@@ -77,10 +94,16 @@ BEGIN TRY
 
     SET @usedb = 'USE msdb;';
 
+    /*
+        Создаем роль @databaseRole в БД msdb, если она отстутствует
+    */
     IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = @databaseRole and type = 'R')
         SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
 			+ 'CREATE ROLE [' + @databaseRole + '];';
     
+    /*
+        Добавляем роль @databaseRole в роль "db_datareader" в БД msdb
+    */
     SET @sysrole = 'db_datareader';
 
     IF NOT EXISTS (SELECT 1 FROM sys.database_principals r
@@ -96,6 +119,9 @@ BEGIN TRY
             SET @command += 'EXEC sp_addrolemember ''' + @sysrole + ''', ''' + @databaseRole + ''';';
     END
 
+    /*
+        Добавляем роль @databaseRole в роль "SQLAgentUserRole" в БД msdb
+    */
     SET @sysrole = 'SQLAgentUserRole';
 
     IF NOT EXISTS (SELECT 1 FROM sys.database_principals r
@@ -115,21 +141,5 @@ BEGIN TRY
         PRINT @command;
     ELSE IF @debug = 'N'
         EXEC sp_executesql @command;
-
-END TRY
-BEGIN CATCH
-    DECLARE @ErrorMessage  NVARCHAR(4000)
-		  , @ErrorSeverity INT
-		  , @ErrorState	   INT;
-
-    SELECT @ErrorMessage  = ERROR_MESSAGE()
-         , @ErrorSeverity = ERROR_SEVERITY()
-         , @ErrorState    = ERROR_STATE();
-
-    RAISERROR (@ErrorMessage,	-- Message text.
-               @ErrorSeverity,	-- Severity.
-               @ErrorState		-- State.
-               );
-END CATCH
 
 END
