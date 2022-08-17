@@ -1,15 +1,22 @@
 DECLARE 
-      @database  NVARCHAR(30)
-    , @directory NVARCHAR(255)
-	, @dbfile    NVARCHAR(255)
-    , @debug     NVARCHAR(1)
+      @database     NVARCHAR(30)
+    , @directory    NVARCHAR(255)
+	, @pathToFile   NVARCHAR(255)
+    , @debug        NVARCHAR(1)
     ;
 
+/*
+    @database   - Имя создаваемой БД
+    @directory  - Путь к каталогу, где будет распологаться БД
+    @pathToFile - Полный путь к файлу БД
+    @debug      - Режим запуска скрипта: режим отладки (Y) | режим выполнения (N)
+*/
+
 SELECT
-      @database  = 'DBAtools'					-- Имя создаваемой БД
-    , @directory = 'R:\Data'					-- Путь к каталогу, где будет распологаться БД
-    , @dbfile    = @directory + '\' + @database	-- Полный путь к файлу БД
-    , @debug     = 'Y'							-- Режим запуска скрипта: режим отладки (Y) | режим выполнения (N)
+      @database   = 'DBAtools'
+    , @directory  = 'R:\Data'
+    , @pathToFile = @directory + '\' + @database
+    , @debug      = 'Y'
     ;
 /*================================================*/
 
@@ -54,9 +61,9 @@ BEGIN
         SET @command += ';';
     ELSE
         SET @command += @newline1 + 'ON PRIMARY'
-            + @newline1 + '( NAME = N''' + @database + ''', FILENAME = N''' + @dbfile  + '.mdf'', SIZE = 8192KB, FILEGROWTH = 65536KB )'
+            + @newline1 + '( NAME = N''' + @database + ''', FILENAME = N''' + @pathToFile  + '.mdf'', SIZE = 8192KB, FILEGROWTH = 65536KB )'
             + @newline1 + 'LOG ON'
-            + @newline1 + '( NAME = N''' + @database + '_log'', FILENAME = N''' + @dbfile  + '_log.ldf'', SIZE = 8192KB, FILEGROWTH = 65536KB );';
+            + @newline1 + '( NAME = N''' + @database + '_log'', FILENAME = N''' + @pathToFile  + '_log.ldf'', SIZE = 8192KB, FILEGROWTH = 65536KB );';
 
     SET @command += @newline2 + 'ALTER DATABASE [' + @database + '] SET RECOVERY SIMPLE;' + @newline2
         + 'ALTER AUTHORIZATION ON DATABASE::' + @database +' TO [sa];';
