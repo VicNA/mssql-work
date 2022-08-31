@@ -7,7 +7,7 @@ DECLARE
 
 /*
     @database   - Имя создаваемой БД
-    @directory  - Путь к каталогу, где будет распологаться БД
+    @directory  - Путь к каталогу, где будет распологаться БД. Если значение не указано, будет использоваться путь по умолчанию для новых БД.
     @pathToFile - Полный путь к файлу БД
     @debug      - Режим запуска скрипта: режим отладки (Y) | режим выполнения (N)
 */
@@ -31,7 +31,6 @@ SELECT
       @command  = ''
     , @newline1 = NCHAR(13) + NCHAR(10)
     , @newline2 = @newline1 + @newline1
-    
     ;
 
 SET NOCOUNT ON;
@@ -42,6 +41,9 @@ IF NOT EXISTS (SELECT 1 FROM sys.sysdatabases WHERE name = @database)
 BEGIN
     SET @usedb = 'USE master;';
 
+    /*
+        Создаем каталог, в которой будет распологаться БД @database, если указано значение переменной @directory
+    */
     IF LEN(ISNULL(@directory, '')) > 0
         SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 + @usedb + @newline2 ELSE @usedb + @newline2 END
             + 'EXEC sp_configure ''show advanced option'', 1;' + @newline1
@@ -54,6 +56,9 @@ BEGIN
             + 'EXEC sp_configure ''show advanced option'', 0;' + @newline1
             + 'RECONFIGURE WITH OVERRIDE;';
     
+    /*
+        Создаем БД @database
+    */
     SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 ELSE @usedb + @newline2 END
         + N'CREATE DATABASE [' + @database + ']';
 
@@ -65,11 +70,21 @@ BEGIN
             + @newline1 + 'LOG ON'
             + @newline1 + '( NAME = N''' + @database + '_log'', FILENAME = N''' + @pathToFile  + '_log.ldf'', SIZE = 8192KB, FILEGROWTH = 65536KB );';
 
+    /*
+        Настраиваем дополнительные параметры БД @database:
+         - модель восстановление: SIMPLE
+         - владелец БД: sa
+    */
     SET @command += @newline2 + 'ALTER DATABASE [' + @database + '] SET RECOVERY SIMPLE;' + @newline2
         + 'ALTER AUTHORIZATION ON DATABASE::' + @database +' TO [sa];';
     
     IF @debug = 'Y'
+    BEGIN
+        PRINT '################';
+        PRINT '# DEBUG SCRIPT #';
+        PRINT '################';
         PRINT @command;
+    END
     ELSE IF @debug = 'N'
         EXEC sp_executesql @command;
 END

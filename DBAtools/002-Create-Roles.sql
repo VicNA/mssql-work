@@ -138,7 +138,12 @@ BEGIN
     END
 
     IF @debug = 'Y'
+        BEGIN
+        PRINT '################';
+        PRINT '# DEBUG SCRIPT #';
+        PRINT '################';
         PRINT @command;
+    END
     ELSE IF @debug = 'N'
         EXEC sp_executesql @command;
 
