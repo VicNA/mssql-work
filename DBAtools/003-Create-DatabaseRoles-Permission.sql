@@ -1,14 +1,6 @@
 /*#######################
 # Create database roles #
 #######################*/
-/* 
-    Для выполнения задач по обслуживанию БД вцелом необходимы права:
-    - VIEW ANY DATABASE
-
-    Для выполнения задач конкретно проверок целостности БД:
-    - VIEW SERVER STATE
-    - VIEW DATABASE STATE (DBAtools)
-*/
 
 DECLARE
 	  @database NVARCHAR(30)
@@ -26,7 +18,8 @@ SELECT
 	  @database	= 'DBAtools'
 	, @role     = 'job_executor'
 	, @debug	= 'Y'
-/*===============================================*/
+    ;
+/*============================================================================================*/
 
 DECLARE 
       @command  NVARCHAR(MAX)
@@ -97,6 +90,10 @@ BEGIN
         SET @command += 'EXEC sp_addrolemember ''' + @sysrole + ''', ''' + @role + ''';';
 END
 
+/* 
+    Добавляем разрешение 'VIEW DATABASE STATE' в роль @role, если этого разрешения еще нет
+    (Для выполнения задач конкретно проверок целостности БД)
+*/
 SET @perm = 'VIEW DATABASE STATE';
 
 IF NOT EXISTS (SELECT 1 FROM sys.database_principals pr

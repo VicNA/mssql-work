@@ -1,14 +1,6 @@
 /*##############################################################################################
 # Creating a login and server role, adding a participant to the role and assigning permissions #
 ##############################################################################################*/
-/* 
-    Для выполнения задач по обслуживанию БД вцелом необходимы права:
-    - VIEW ANY DATABASE
-
-    Для выполнения задач конкретно проверок целостности БД:
-    - VIEW SERVER STATE
-    - VIEW DATABASE STATE (DBAtools)
-*/
 
 DECLARE
 	  @database NVARCHAR(30)
@@ -35,7 +27,8 @@ SELECT
 	, @sid     	= ''
 	, @role	    = 'job_executor'
 	, @debug	= 'Y'
-/*===============================================*/
+    ;
+/*============================================================================================*/
 
 DECLARE 
       @command  NVARCHAR(MAX)
@@ -78,12 +71,12 @@ BEGIN
         + CASE WHEN @sid IS NULL THEN ';' ELSE ', SID = ' + @sid + ';' END;
 END
 
-/*
-    Создаем серверную роль @role, если она отстутствует. Применимо начинай SQL Server 2012
-*/
 IF @version > 10
 BEGIN
     
+    /*
+        Создаем серверную роль @role, если она отстутствует. Применимо начинай SQL Server 2012
+    */
     IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = @role AND type = 'R')
         SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 ELSE @usedb + @newline2 END
 			+ 'CREATE SERVER ROLE [' + @role + '] AUTHORIZATION [sa];';
@@ -99,6 +92,10 @@ BEGIN
             + 'ALTER SERVER ROLE [' + @role + '] ADD MEMBER [' + @login + '];';
     END
 
+    /* 
+        Добавляем разрешение 'VIEW ANY DATABASE' в серверную роль @role, если этого разрешения еще нет
+        (Для выполнения задач по обслуживанию БД вцелом)
+    */
     SET @perm = 'VIEW ANY DATABASE';
     
     IF NOT EXISTS (SELECT 1 FROM sys.server_principals pr
@@ -109,6 +106,10 @@ BEGIN
             + 'GRANT ' + @perm + ' TO [' + @role + '];';
     END
     
+    /* 
+        Добавляем разрешение 'VIEW SERVER STATE' в серверную роль @role, если этого разрешения еще нет
+        (Для выполнения задач конкретно проверок целостности БД)
+    */
     SET @perm = 'VIEW SERVER STATE';
 
     IF NOT EXISTS (SELECT 1 FROM sys.server_principals pr
@@ -123,6 +124,10 @@ END
 ELSE
 BEGIN
     
+    /* 
+        Добавляем разрешение 'VIEW ANY DATABASE' логину @login, если этого разрешения еще нет
+        (Для выполнения задач по обслуживанию БД вцелом)
+    */
     SET @perm = 'VIEW ANY DATABASE';
 
     IF NOT EXISTS (SELECT 1 FROM sys.server_principals pr
@@ -133,6 +138,10 @@ BEGIN
             + 'GRANT ' + @perm + ' TO [' + @login + '];';
     END
 
+    /* 
+        Добавляем разрешение 'VIEW SERVER STATE' логину @login, если этого разрешения еще нет
+        (Для выполнения задач конкретно проверок целостности БД)
+    */
     SET @perm = 'VIEW SERVER STATE';
 
     IF NOT EXISTS (SELECT 1 FROM sys.server_principals pr

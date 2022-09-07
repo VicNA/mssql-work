@@ -1,3 +1,7 @@
+/*######################
+# Create database user #
+######################*/
+
 DECLARE 
 	  @database	NVARCHAR(30)
 	, @login	NVARCHAR(20)
@@ -5,6 +9,13 @@ DECLARE
     , @role     NVARCHAR(20)
     , @debug	NVARCHAR(1)
     ;
+
+/*
+    @database   - Имя ранее созданной БД в скрипте 001-Create-Database.sql
+    
+    @role       - Наименование роли базы данных
+    @debug      - Режим запуска скрипта: режим отладки (Y) | режим выполнения (N)
+*/
 
 SELECT
 	  @database	= 'DBAtools'

@@ -8,10 +8,11 @@ GO
 ALTER PROCEDURE [dbo].[usp_DatabaseBackup]
       @databases            NVARCHAR(MAX) = NULL
     , @availabilityGroups   NVARCHAR(MAX) = NULL
-    , @directoryPath        NVARCHAR(MAX) = NULL
+    , @directory            NVARCHAR(MAX) = NULL
     , @backupType           NVARCHAR(4)   = NULL
     , @cleanupTime          INT           = NULL
     , @cleanupMode          NVARCHAR(MAX) = NULL
+    , @checkSum             NVARCHAR(1)   = 'Y'
 AS
 SET XACT_ABORT, NOCOUNT ON;
 
@@ -40,13 +41,13 @@ IF @databases = 'USER_DATABASES'
 
 EXEC [dbo].[DatabaseBackup]
   @Databases                           = @databases
-, @Directory                           = @directoryPath
+, @Directory                           = @directory
 , @BackupType                          = @backupType
 , @CleanupTime                         = @cleanupTime
 , @CleanupMode                         = @cleanupMode
 , @Compress                            = 'Y'
 , @ChangeBackupType                    = 'Y'
-, @CheckSum                            = 'Y'
+, @CheckSum                            = @checkSum
 , @AvailabilityGroups                  = @availabilityGroups
 , @DirectoryStructure                  = '{DatabaseName}'
 , @AvailabilityGroupDirectoryStructure = '{ClusterName}${AvailabilityGroupName}{DirectorySeparator}{DatabaseName}'
