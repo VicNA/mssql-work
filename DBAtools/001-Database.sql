@@ -3,40 +3,39 @@
 #################*/
 
 DECLARE 
-      @database     NVARCHAR(30)
-    , @directory    NVARCHAR(255)
-	, @pathToFile   NVARCHAR(255)
-    , @debug        NVARCHAR(1)
+      @database  NVARCHAR(30)
+    , @directory NVARCHAR(255)
+    , @debug     NVARCHAR(1)
     ;
 
 /*
     @database   - Имя создаваемой БД
     @directory  - Путь к каталогу, где будет распологаться БД. Если значение не указано, будет использоваться путь по умолчанию для новых БД.
-    @pathToFile - Полный путь к файлу БД
     @debug      - Режим запуска скрипта: режим отладки (Y) | режим выполнения (N)
 */
 
 SELECT
-      @database   = 'DBAtools'
-    , @directory  = 'R:\Data'
-    , @pathToFile = @directory + '\' + @database
-    , @debug      = 'Y'
+      @database  = 'DBAtools'
+    , @directory = 'R:\Data'
+    , @debug     = 'Y'
     ;
 /*============================================================================================*/
 
 DECLARE 
-      @command  NVARCHAR(MAX)
-    , @usedb    NVARCHAR(20)
-    , @newline1 NVARCHAR(2)
-    , @newline2 NVARCHAR(4)
-    , @title    NVARCHAR(MAX)
+      @command    NVARCHAR(MAX)
+    , @usedb      NVARCHAR(20)
+    , @newline1   NVARCHAR(2)
+    , @newline2   NVARCHAR(4)
+    , @title      NVARCHAR(MAX)
+    , @pathToFile NVARCHAR(255)
     ;
 
 SELECT
-      @command  = ''
-    , @newline1 = NCHAR(13) + NCHAR(10)
-    , @newline2 = @newline1 + @newline1
-    , @title    = '# The target database ' + @database + ' already exists #'
+      @command    = ''
+    , @newline1   = NCHAR(13) + NCHAR(10)
+    , @newline2   = @newline1 + @newline1
+    , @title      = '# The target database ' + @database + ' already exists #'
+    , @pathToFile = @directory + '\' + @database
     ;
 
 
