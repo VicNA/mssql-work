@@ -13,6 +13,7 @@ ALTER PROCEDURE [dbo].[usp_DatabaseBackup]
     , @cleanupTime          INT           = NULL
     , @cleanupMode          NVARCHAR(MAX) = NULL
     , @checkSum             NVARCHAR(1)   = 'Y'
+    , @logToTable           NVARCHAR(1)   = 'Y'
 AS
 SET XACT_ABORT, NOCOUNT ON;
 
@@ -25,7 +26,7 @@ BEGIN
         JOIN msdb..sysjobactivity a ON a.job_id = j.job_id
     WHERE j.name = N'DBA: Database FULL backup'
         AND a.run_requested_date IS NOT NULL AND a.stop_execution_date IS NULL
-        AND a.session_id = (SELECT MAX(session_id) FROM msdb.dbo.sysjobactivity);
+        AND a.session_id = (SELECT MAX(session_id) FROM msdb..sysjobactivity);
 
     IF @job IS NOT NULL
     BEGIN
@@ -49,15 +50,16 @@ EXEC [dbo].[DatabaseBackup]
 , @ChangeBackupType                    = 'Y'
 , @CheckSum                            = @checkSum
 , @AvailabilityGroups                  = @availabilityGroups
-, @DirectoryStructure                  = '{DatabaseName}'
-, @AvailabilityGroupDirectoryStructure = '{ClusterName}${AvailabilityGroupName}{DirectorySeparator}{DatabaseName}'
+, @DirectoryStructure                  = '{ServerName}{DirectorySeparator}{DatabaseName}'
 , @FileName                            = '{ServerName}${InstanceName}_{DatabaseName}_{Year}_{Month}_{Day}_{Hour}{Minute}{Second}.{FileExtension}'
+, @AvailabilityGroupDirectoryStructure = '{ClusterName}${AvailabilityGroupName}{DirectorySeparator}{DatabaseName}'
 , @AvailabilityGroupFileName           = '{ClusterName}${AvailabilityGroupName}_{DatabaseName}_{Year}_{Month}_{Day}_{Hour}{Minute}{Second}.{FileExtension}'
 , @FileExtensionFull                   = 'bak'
 , @FileExtensionDiff                   = 'diff'
 , @FileExtensionLog                    = 'trn'
 , @DatabaseOrder                       = 'DATABASE_SIZE_ASC'
-, @LogToTable                          = 'Y';
+, @LogToTable                          = @logToTable
+;
 
 GO
 

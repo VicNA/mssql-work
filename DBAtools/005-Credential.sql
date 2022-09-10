@@ -39,7 +39,7 @@ BEGIN
 
     USE master;
 
-    SET @usedb = 'USE master;'; -- Отступ присутствует из-за сообщений "Configuration option ..."
+    SET @usedb = 'USE ' + DB_NAME() + ';'; -- Отступ присутствует из-за сообщений "Configuration option ..."
 
     /* 
         Создаем учетные данные внутри SQL Server, которая идентифицируется с учетной записью домена или локальной машины 
@@ -53,8 +53,9 @@ BEGIN
         EXEC sp_configure 'xp_cmdshell', 1;
         RECONFIGURE;
 
-        SELECT @cmdline = 'powershell -command "(Get-CimInstance -ClassName CIM_System).DomainName"'
-             , @cmdline = 'EXEC master..xp_cmdshell ''' + @cmdline + ''';';
+        SELECT 
+              @cmdline = 'powershell -command "(Get-CimInstance -ClassName CIM_System).DomainName"'
+            , @cmdline = 'EXEC master..xp_cmdshell ''' + @cmdline + ''';';
 
         INSERT @cmdout (string)
         EXEC sp_executesql @cmdline;

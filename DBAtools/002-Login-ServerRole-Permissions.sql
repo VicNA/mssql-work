@@ -80,6 +80,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = @role AND type = 'R')
         SET @command += CASE WHEN LEN(@command) > 0 THEN @newline2 ELSE @usedb + @newline2 END
 			+ 'CREATE SERVER ROLE [' + @role + '] AUTHORIZATION [sa];';
+    
     /* 
         Добавляем логин @login в серверную роль @role, если логин не является членом этой роли 
     */
